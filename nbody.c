@@ -8,9 +8,9 @@
 #include "compute.h"
 
 // represents the objects in the system.  Global variables
-vector3 *hVel, *d_hVel;
-vector3 *hPos, *d_hPos;
-double *mass;
+__constant__ vector3 *hVel, *d_hVel;
+__constant__ vector3 *hPos, *d_hPos;
+__constant__ double *mass;
 
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
