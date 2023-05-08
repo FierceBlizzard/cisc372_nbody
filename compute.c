@@ -9,12 +9,12 @@
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 // nbodyForce kernel function
 // Compute the gravitational force between two bodies
-__global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
+__global__
+void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
-        int j;
         vector3 f = {0.0, 0.0, 0.0};
-        for (j = 0; j < n; j++) {
+        for (int j = 0; j < n; j++) {
             if (i != j) {
                 double dx = pos[j].x - pos[i].x;
                 double dy = pos[j].y - pos[i].y;
@@ -31,7 +31,8 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
 }
 
 // Update the position and velocity of a body based on the forces acting on it
-__global__ void updateBody(int n, double dt, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
+__global__ 
+void updateBody(int n, double dt, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
         vector3 a = {force[i].x / mass[i], force[i].y / mass[i], force[i].z / mass[i]};
@@ -44,7 +45,8 @@ __global__ void updateBody(int n, double dt, vector3 *pos, vector3 *vel, double 
     }
 }
 
-__global__ void computeAcceleration(int n, vector3 *pos, double *mass, double *accel) {
+__global__ 
+void computeAcceleration(int n, vector3 *pos, double *mass, double *accel) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
     if (i < n && j < n) {
