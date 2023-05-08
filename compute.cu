@@ -64,23 +64,32 @@ __global__ void computeAcceleration(int n, vector3 *pos, double *mass, double *a
 }
 
 // Compute the gravitational forces between all bodies in the system and update their positions and velocities
-void compute() {
-    cudaMemcpy(d_hPos, hPos, NUMENTITIES * sizeof(vector3), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_hVel, hVel, NUMENTITIES * sizeof(vector3), cudaMemcpyHostToDevice);
-    cudaMemcpy(mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
+void compute(double* hPos, double* hVel, double* mass, double* force, double* acceleration, double DT, int NUMENTITIES) {
+    double *d_hPos, *d_hVel, *d_mass;
+
+    cudaMalloc(&d_hPos, NUMENTITIES * sizeof(double) * 3);
+    cudaMalloc(&d_hVel, NUMENTITIES * sizeof(double) * 3);
+    cudaMalloc(&d_mass, NUMENTITIES * sizeof(double));
+
+    cudaMemcpy(d_hPos, hPos, NUMENTITIES * sizeof(double) * 3, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_hVel, hVel, NUMENTITIES * sizeof(double) * 3, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
     int numBlocks = (NUMENTITIES + threadsPerBlock - 1) / threadsPerBlock;
 
     // Compute gravitational forces between all bodies
-    computeForces<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, d_hPos, d_hVel, mass, force);
+    computeForces<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, d_hPos, d_hVel, d_mass, force);
 
     // Compute acceleration of all bodies
-    computeAcceleration<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, d_hPos, mass, acceleration);
+    computeAcceleration<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, d_hPos, d_mass, acceleration);
 
     // Update positions and velocities of all bodies
-    updateBody<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, DT, d_hPos, d_hVel, mass, acceleration);
+    updateBody<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, DT, d_hPos, d_hVel, d_mass, acceleration);
 
-    cudaMemcpy(mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(mass, d_mass, NUMENTITIES * sizeof(double), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_hPos);
+    cudaFree(d_hVel);
+    cudaFree(d_mass);
 }
