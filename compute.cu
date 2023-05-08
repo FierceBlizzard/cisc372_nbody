@@ -2,7 +2,8 @@
 #include <math.h>
 #include "vector.h"
 #include "config.h"
-
+#include "cuda.h"
+#include "cuda_runtime.h"
 //compute: Updates the positions and locations of the objects in the system based on gravity.
 //Parameters: None
 //Returns: None
@@ -81,6 +82,6 @@ void compute() {
     // Update positions and velocities of all bodies
     updateBody<<<numBlocks, threadsPerBlock>>>(NUMENTITIES, DT, d_hPos, d_hVel, mass, acceleration);
 
-    cudaMemcpy(hPos, d_hPos, NUMENTITIES * sizeof(vector3), cudaMemcpyDeviceToHost);
-    cudaMemcpy(hVel, d_hVel, NUMENTITIES * sizeof(vector3), cudaMemcpyDeviceToHost);
+    cudaMemcpy(mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass, mass, NUMENTITIES * sizeof(double), cudaMemcpyHostToDevice);
 }
