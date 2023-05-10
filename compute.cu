@@ -1,18 +1,18 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "vector.h"
-#include "config.h"
-#include "cuda.h"
-#include "cuda_runtime.h"
+#include <cuda.h>
+#include "vector3.h"
+#include "compute.h"
 
-// Compute the gravitational force between two bodies
-#define G 6.674e-11
+#define BLOCK_SIZE 256
 
-__global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force, double G) {
+__global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
+        int j;
         vector3 f = {0.0, 0.0, 0.0};
-        for (int j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) {
             if (i != j) {
                 double dx = pos[j].x - pos[i].x;
                 double dy = pos[j].y - pos[i].y;
@@ -24,32 +24,37 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
                 f.z += mag * dz;
             }
         }
-        force[i].x = f.x;
-        force[i].y = f.y;
-        force[i].z = f.z;
+        force[i] = f;
     }
 }
 
-// Update the position and velocity of a body based on the forces acting on it
-__global__ void updateBody(int n, double dt, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
+__global__ void computeAcceleration(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force, vector3 *acc) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
-        vector3 a = {force[i].x / mass[i], force[i].y / mass[i], force[i].z / mass[i]};
-        vel[i].x += a.x * dt;
-        vel[i].y += a.y * dt;
-        vel[i].z += a.z * dt;
-        pos[i].x += vel[i].x * dt;
-        pos[i].y += vel[i].y * dt;
-        pos[i].z += vel[i].z * dt;
+        acc[i].x = force[i].x / mass[i];
+        acc[i].y = force[i].y / mass[i];
+        acc[i].z = force[i].z / mass[i];
     }
 }
 
-// Compute the gravitational forces between all pairs of bodies
-void compute(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
-    int blockSize = 256;
-    int numBlocks = (n + blockSize - 1) / blockSize;
-    computeForces<<<numBlocks, blockSize>>>(n, pos, vel, mass, force, G);
-    cudaDeviceSynchronize();
-    updateBody<<<numBlocks, blockSize>>>(n, DT, pos, vel, mass, force);
-    cudaDeviceSynchronize();
+void compute(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *acc) {
+    int numBlocks = (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    vector3 *d_pos, *d_vel, *d_force, *d_acc;
+    double *d_mass;
+    cudaMalloc(&d_pos, n * sizeof(vector3));
+    cudaMalloc(&d_vel, n * sizeof(vector3));
+    cudaMalloc(&d_mass, n * sizeof(double));
+    cudaMalloc(&d_force, n * sizeof(vector3));
+    cudaMalloc(&d_acc, n * sizeof(vector3));
+    cudaMemcpy(d_pos, pos, n * sizeof(vector3), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vel, vel, n * sizeof(vector3), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass, mass, n * sizeof(double), cudaMemcpyHostToDevice);
+    computeForces<<<numBlocks, BLOCK_SIZE>>>(n, d_pos, d_vel, d_mass, d_force);
+    computeAcceleration<<<numBlocks, BLOCK_SIZE>>>(n, d_pos, d_vel, d_mass, d_force, d_acc);
+    cudaMemcpy(acc, d_acc, n * sizeof(vector3), cudaMemcpyDeviceToHost);
+    cudaFree(d_pos);
+    cudaFree(d_vel);
+    cudaFree(d_mass);
+    cudaFree(d_force);
+    cudaFree(d_acc);
 }
