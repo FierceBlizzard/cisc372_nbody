@@ -7,7 +7,6 @@
 #include "config.h"
 
 #define BLOCK_SIZE 256
-#define G GRAV_CONSTANT
 
 __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -20,7 +19,7 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
                 double dy = pos[j].y - pos[i].y;
                 double dz = pos[j].z - pos[i].z;
                 double dist = sqrt(dx * dx + dy * dy + dz * dz);
-                double mag = G * mass[i] * mass[j] / (dist * dist * dist);
+                double mag = GRAV_CONSTANT * *mass[i] * *mass[j] / (dist * dist * dist);
                 f.x += mag * dx;
                 f.y += mag * dy;
                 f.z += mag * dz;
@@ -33,9 +32,9 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
 __global__ void computeAcceleration(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force, vector3 *acc) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
-        acc[i].x = force[i].x / mass[i];
-        acc[i].y = force[i].y / mass[i];
-        acc[i].z = force[i].z / mass[i];
+        acc[i].x = force[i].x / *mass[i];
+        acc[i].y = force[i].y / *mass[i];
+        acc[i].z = force[i].z / *mass[i];
     }
 }
 
