@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <cuda.h>
-#include "vector3.h"
+#include "vector.h"
 #include "compute.h"
+#include "config.h"
 
 #define BLOCK_SIZE 256
+#define G GRAV_CONSTANT
 
 __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
