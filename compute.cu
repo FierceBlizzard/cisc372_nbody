@@ -55,8 +55,23 @@ void compute(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *acc) {
     cudaMemcpy(d_vel, vel, n * sizeof(vector3), cudaMemcpyHostToDevice);
     cudaMemcpy(d_mass, mass, n * sizeof(double), cudaMemcpyHostToDevice);
     computeForces<<<numBlocks, BLOCK_SIZE>>>(n, d_pos, d_vel, d_mass, d_force);
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error in computeForces: %s\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
     computeAcceleration<<<numBlocks, BLOCK_SIZE>>>(n, d_pos, d_vel, d_mass, d_force, d_acc);
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error in computeAcceleration: %s\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
     cudaMemcpy(acc, d_acc, n * sizeof(vector3), cudaMemcpyDeviceToHost);
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Error in cudaMemcpy: %s\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
     cudaFree(d_pos);
     cudaFree(d_vel);
     cudaFree(d_mass);
