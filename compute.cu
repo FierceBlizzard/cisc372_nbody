@@ -15,14 +15,19 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
         vector3 f = {0.0, 0.0, 0.0};
         for (j = 0; j < n; j++) {
             if (i != j) {
-                double dx = pos[j].x - pos[i].x;
-                double dy = pos[j].y - pos[i].y;
-                double dz = pos[j].z - pos[i].z;
-                double dist = sqrt(dx * dx + dy * dy + dz * dz);
-                double mag = GRAV_CONSTANT * *mass[i] * *mass[j] / (dist * dist * dist);
-                f.x += mag * dx;
-                f.y += mag * dy;
-                f.z += mag * dz;
+                vector3 r = {pos[j].x - pos[i].x, pos[j].y - pos[i].y, pos[j].z - pos[i].z};
+                vector3 r_mag = {r.x / (sqrt(r.x * r.x + r.y * r.y + r.z * r.z)),
+                                 r.y / (sqrt(r.x * r.x + r.y * r.y + r.z * r.z)),
+                                 r.z / (sqrt(r.x * r.x + r.y * r.y + r.z * r.z))};
+                vector3 dist = {sqrt(r.x * r.x + r.y * r.y + r.z * r.z),
+                                sqrt(r.x * r.x + r.y * r.y + r.z * r.z),
+                                sqrt(r.x * r.x + r.y * r.y + r.z * r.z)};
+                vector3 mag = {GRAV_CONSTANT * mass[i] * mass[j] / (dist.x * dist.x * dist.x),
+                               GRAV_CONSTANT * mass[i] * mass[j] / (dist.y * dist.y * dist.y),
+                               GRAV_CONSTANT * mass[i] * mass[j] / (dist.z * dist.z * dist.z)};
+                f.x += mag.x * r_mag.x;
+                f.y += mag.y * r_mag.y;
+                f.z += mag.z * r_mag.z;
             }
         }
         force[i] = f;
@@ -32,9 +37,8 @@ __global__ void computeForces(int n, vector3 *pos, vector3 *vel, double *mass, v
 __global__ void computeAcceleration(int n, vector3 *pos, vector3 *vel, double *mass, vector3 *force, vector3 *acc) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
-        acc[i].x = force[i].x / *mass[i];
-        acc[i].y = force[i].y / *mass[i];
-        acc[i].z = force[i].z / *mass[i];
+        vector3 a = {force[i].x / mass[i], force[i].y / mass[i], force[i].z / mass[i]};
+        acc[i] = a;
     }
 }
 
