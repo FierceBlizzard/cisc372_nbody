@@ -21,7 +21,9 @@ double *mass;
 void initHostMemory(int numObjects)
 {
 	hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
+	d_hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
 	hPos = (vector3 *)malloc(sizeof(vector3) * numObjects);
+	d_hPos = (vector3 *)malloc(sizeof(vector3) * numObjects);
 	mass = (double *)malloc(sizeof(double) * numObjects);
 }
 
@@ -32,6 +34,8 @@ void initHostMemory(int numObjects)
 void freeHostMemory()
 {
 	free(hVel);
+	free(d_hVel);
+	free(d_hVel);
 	free(hPos);
 	free(mass);
 }
