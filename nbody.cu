@@ -6,10 +6,10 @@
 #include "config.h"
 #include "planets.h"
 #include "compute.h"
-#include "cuda.h"
-#include "cuda_runtime.h"
 
-// represents the objects in the system.  Global variables
+//Global vectors to represent the bodies in the system
+//(as in n bodies)
+//(n-body reference)
 vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
@@ -21,9 +21,7 @@ double *mass;
 void initHostMemory(int numObjects)
 {
 	hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
-	d_hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
 	hPos = (vector3 *)malloc(sizeof(vector3) * numObjects);
-	d_hPos = (vector3 *)malloc(sizeof(vector3) * numObjects);
 	mass = (double *)malloc(sizeof(double) * numObjects);
 }
 
@@ -34,8 +32,6 @@ void initHostMemory(int numObjects)
 void freeHostMemory()
 {
 	free(hVel);
-	free(d_hVel);
-	free(d_hVel);
 	free(hPos);
 	free(mass);
 }
@@ -64,7 +60,7 @@ void planetFill(){
 //Side Effects: Fills count entries in our system starting at index start (0 based)
 void randomFill(int start, int count)
 {
-	int i, j, c = start;
+	int i, j = start;
 	for (i = start; i < start + count; i++)
 	{
 		for (j = 0; j < 3; j++)
@@ -94,6 +90,7 @@ void printSystem(FILE* handle){
 		fprintf(handle,"),m=%lf\n",mass[i]);
 	}
 }
+
 
 int main(int argc, char **argv)
 {
