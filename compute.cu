@@ -65,7 +65,7 @@ void compute() {
     int blockSize = 256; 
     int numBlocks = (NUMENTITIES + blockSize - 1) / blockSize;
 
-    Pcompute<<<numBlocks, blockSize>>>(nums, accels, d_vel, d_pos, d_mass);
+    PCompute<<<numBlocks, blockSize>>>(nums, accels, d_vel, d_pos, d_mass);
     cudaDeviceSynchronize();
 
     cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
