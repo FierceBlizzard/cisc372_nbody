@@ -62,13 +62,13 @@ void compute() {
 	cudaMemcpy(d_pos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 
-    cudaMallocManaged((void**) &vals, sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+    cudaMallocManaged((void**) &nums, sizeof(vector3)*NUMENTITIES*NUMENTITIES);
     cudaMallocManaged((void**) &accels, sizeof(vector3*)*NUMENTITIES);
 
     int blockSize = 256; 
     int numBlocks = (NUMENTITIES + blockSize - 1) / blockSize;
 
-    parallelCompute<<<numBlocks, blockSize>>>(vals, accels, d_vel, d_pos, d_mass);
+    Pcompute<<<numBlocks, blockSize>>>(nums, accels, d_vel, d_pos, d_mass);
     cudaDeviceSynchronize();
 
     cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
@@ -76,5 +76,5 @@ void compute() {
     cudaMemcpy(mass, d_mass, sizeof(double) * NUMENTITIES, cudaMemcpyDefault);
 
     cudaFree(accels);
-    cudaFree(vals);
+    cudaFree(nums);
 }
