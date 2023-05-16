@@ -51,9 +51,6 @@ void compute() {
     vector3 *d_vel, *d_pos;
     double *d_mass;
 
-    vector3 *d_vel, *d_pos;
-    double *d_mass;
-
     cudaMallocManaged((void**) &d_vel, (sizeof(vector3) * NUMENTITIES));
     cudaMallocManaged((void**) &d_pos, (sizeof(vector3) * NUMENTITIES));
 	cudaMallocManaged((void**) &d_mass, (sizeof(double) * NUMENTITIES));
